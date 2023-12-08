@@ -3,18 +3,18 @@ import random
 
 pygame.init()
 
-largura_tela = 600
-altura_tela = 900
-bloco_tamanho = 30
-escala = 20
+LARGURA_TELA = 600
+ALTURA_TELA = 900
+BLOCO_TAMANHO = 30
+ESCALA = 20
 
-largura_tela_real = largura_tela // escala
-altura_tela_real = altura_tela // escala
+LARGURA_TELA_REAL = LARGURA_TELA // ESCALA
+ALTURA_TELA_REAL = ALTURA_TELA // ESCALA
 
-cor_fundo = (0, 0, 0)
-cores = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
+COR_FUNDO = (0, 0, 0)
+CORES = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
 
-formas = [
+FORMAS = [
     [[1, 1, 1],
      [0, 0, 0]],
 
@@ -40,36 +40,39 @@ class Bloco:
     def __init__(self, forma, cor):
         self.forma = forma
         self.cor = cor
-        self.x = largura_tela_real // 2 - len(forma[0]) // 2
+        self.x = LARGURA_TELA_REAL // 2 - len(forma[0]) // 2
         self.y = 0
 
-def desenhar_bloco(bloco, offset):
+def desenhar_bloco(tela, bloco, offset):
     for i, linha in enumerate(bloco.forma):
         for j, valor in enumerate(linha):
             if valor:
-                pygame.draw.rect(tela, bloco.cor, ((bloco.x + j) * bloco_tamanho, (bloco.y + i) * bloco_tamanho, bloco_tamanho, bloco_tamanho))
+                pygame.draw.rect(tela, bloco.cor, ((bloco.x + j) * BLOCO_TAMANHO, (bloco.y + i) * BLOCO_TAMANHO, BLOCO_TAMANHO, BLOCO_TAMANHO))
 
 def colisao(bloco, offset):
     for i, linha in enumerate(bloco.forma):
         for j, valor in enumerate(linha):
             if valor:
                 if (
-                    bloco.y + i + offset[1] >= altura_tela_real or
+                    bloco.y + i + offset[1] >= ALTURA_TELA_REAL or
                     bloco.x + j + offset[0] < 0 or
-                    bloco.x + j + offset[0] >= largura_tela_real
+                    bloco.x + j + offset[0] >= LARGURA_TELA_REAL
                 ):
                     return True 
     return False 
 
+def criar_novo_bloco():
+    return Bloco(random.choice(FORMAS), random.choice(CORES))
+
 def main():
-    global tela
-    tela = pygame.display.set_mode((largura_tela, altura_tela))
+    tela = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA))
     pygame.display.set_caption('Tetris')
+    pygame.display.flip()
 
     clock = pygame.time.Clock()
     jogo_ativo = True 
-    bloco_atual = Bloco(random.choice(formas), random.choice(cores))
-    velocidade_queda = 1  # Defina a velocidade de queda desejada
+    bloco_atual = criar_novo_bloco()
+    velocidade_queda = 1
 
     while jogo_ativo:
         for event in pygame.event.get():
@@ -79,29 +82,35 @@ def main():
         teclas = pygame.key.get_pressed()
         if teclas[pygame.K_LEFT]:
             bloco_atual.x -= 1
-            if colisao(bloco_atual, (0, 0)):
+            if bloco_atual.x < 0 or colisao(bloco_atual, (0, 0)):
                 bloco_atual.x += 1
         if teclas[pygame.K_RIGHT]:
             bloco_atual.x += 1
-            if colisao(bloco_atual, (0, 0)):
+            if bloco_atual.x + len(bloco_atual.forma[0]) > LARGURA_TELA_REAL or colisao(bloco_atual, (0, 0)):
                 bloco_atual.x -= 1
         if teclas[pygame.K_DOWN]:
             if not colisao(bloco_atual, (0, 1)):
                 bloco_atual.y += 1
 
+        tela.fill(COR_FUNDO)  
+
         if not colisao(bloco_atual, (0, 1)):
             bloco_atual.y += velocidade_queda
         else:
-            bloco_atual = Bloco(random.choice(formas), random.choice(cores))
+            if bloco_atual.y + len(bloco_atual.forma) >= ALTURA_TELA_REAL:
+                bloco_atual = criar_novo_bloco()
+            else:
+                bloco_atual.y += velocidade_queda
 
-        tela.fill(cor_fundo)  # Preencher a tela no início do loop
+        print("Posição do bloco:", bloco_atual.x, bloco_atual.y)
 
-        desenhar_bloco(bloco_atual, (0, 0))
+        desenhar_bloco(tela, bloco_atual, (0, 0))
 
         pygame.display.flip()
-        clock.tick(10)  # Reduzi a taxa de atualização para 10 FPS
+        clock.tick(10)
 
     pygame.quit()
 
 if __name__ == "__main__":
     main()
+
